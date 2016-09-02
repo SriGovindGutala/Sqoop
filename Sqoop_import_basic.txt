@@ -1,0 +1,41 @@
+Importing into HDFS
+sqoop import \
+  --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+  --username=retail_dba \
+  --password=cloudera \
+  --table=departments \
+  --target-dir=/user/cloudera/hive/departments
+
+sqoop import-all-tables \
+  -m 12 \
+  --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+  --username=retail_dba \
+  --password=cloudera \
+  --warehouse-dir=/user/cloudera/Govind/Certification/Sqoop/departments
+
+Counts the number of lines
+Hdfs dfs –cat /user/cloudera/Govind/Certification/Sqoop/departments/order_items/part-m-*|wc –l
+
+Importing the data where there is no primary key defined in the table
+Need to give the number of mappers and split by parameter to know the splits it has to make for min and max 
+
+sqoop import   
+--connect "jdbc:mysql://quickstart.cloudera:3306/retail_db"   \
+--username=retail_dba \  
+ --password=cloudera  \
+ --table departments_nopk \
+--target-dir /user/cloudera/Govind/Certifiaction/Sqoop/departments/ \
+-m 4 \
+--split-by department_id
+
+sqoop import \
+  --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+  --username=retail_dba \
+  --password=cloudera \
+  --query="select * from orders join order_items on orders.order_id = order_items.order_item_order_id where \$CONDITIONS" \
+  --target-dir=/user/cloudera/Govind/Certification/Sqoop/departments/order_join_items \
+  --split-by order_id \
+  --num-mappers 4
+
+$CONDITIONS  will enclose that query and append with “AND” to order_id
+--where condition can also be used here to add additional conditions to the query it’s sqooping
