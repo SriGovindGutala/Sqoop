@@ -1,0 +1,51 @@
+Importing the data from mysql to HIVE where the table is already created in hive
+
+sqoop import \
+  --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+  --username=retail_dba \
+  --password=cloudera \
+  --table departments \
+  --hive-home /user/hive/warehouse \
+  --hive-import \
+  --hive-overwrite \
+  --hive-table sqoop_import.depts \
+  --outdir java_files
+
+Importing the data from mysql to HIVE and creating the table while SQOOP
+sqoop import \
+  --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+  --username=retail_dba \
+  --password=cloudera \
+  --table departments \
+  --hive-home /user/hive/warehouse \
+  --hive-import \
+  --hive-table retail_stage.depts_test \
+  --create-hive-table \
+  --outdir java_files
+
+IMPORTING all the tables in HIVE using SQOOP
+sqoop import-all-tables \
+  --num-mappers 1 \
+  --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+  --username=retail_dba \
+  --password=cloudera \
+  --hive-import \
+  --hive-overwrite \
+  --create-hive-table \
+  --compress \
+  --compression-codec org.apache.hadoop.io.compress.SnappyCodec \
+  --outdir java_files
+
+You can directly SQOOP into a hive data base
+sqoop import-all-tables \
+  --num-mappers 1 \
+  --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+  --username=retail_dba \
+  --password=cloudera \
+  --hive-import \
+  --hive-overwrite \
+  --create-hive-table \
+  --hive-database sqoop_import \ 
+  --compress \
+  --compression-codec org.apache.hadoop.io.compress.SnappyCodec \
+  --outdir java_files
