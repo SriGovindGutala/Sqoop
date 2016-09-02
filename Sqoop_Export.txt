@@ -1,0 +1,93 @@
+# While exporting, you can export files from HDFS or from Hive (/user/hive/warehouse/example.db/table).
+# The process is same for both hdfs or hive unlike sqoop import
+
+Common Arguments
+--connect <jdbc-uri>	Specify JDBC connect string
+--connection-manager <class-name>	Specify connection manager class to use
+--driver <class-name>	Manually specify JDBC driver class to use
+--hadoop-home	Override $HADOOP_HOME
+--help	Print usage instructions-PRead password from console
+--password	Set authentication password
+--username	Set authentication username
+--verbose	Print more information while working
+--connection-param-file <filename>	Optional properties file that provides connection parameters
+
+Control Arguments
+--direct	Use direct export fast path
+--export-dir <dir>	HDFS source path for the export
+-m,--num-mappers <n>	Use n map tasks to export in parallel
+--table <table-name>	Table to populate
+--update-key <col-name>	Anchor column to use for updates. Use a comma separated list of columns if there are more than one column.
+--update-mode <mode>	Specify how updates are performed when new rows are found with non-matching keys in database.
+	Legal values for mode include updateonly (default) and allowinsert.
+--input-null-string <null-string>	The string to be interpreted as null for string columns
+--input-null-non-string <null-string>	The string to be interpreted as null for non-string columns
+--staging-table <staging-table-name>	The table in which data will be staged before being inserted into the destination table.
+--clear-staging-table	Indicates that any data present in the staging table can be deleted.
+--batch	Use batch mode for underlying statement execution.
+
+•	When you drop data from HDFS to mySQL we need to use both update key and update mode for the tables which already have data else we don’t need to 
+•	If there is data in the mySQL and you don’t use update key and update mode, export fails due to primary key error, not null column,etc
+•	In update mode allowinsert will insert the data which are new in HDFS and not existing in mySQL
+•	In update mode updateonly, it will only update the mySQL existing table rows which are changed in HDFS. Even though we have new rows it will not insert 
+•	When Exporting, if the MySQL table which we are ingesting the data into doesn’t have a primary key then, even though we use the update mode it will insert a new row in the table and create duplicates for a row which is already existing.
+•	When failing the export due to the improper usage of arguments and setup, it runs for 4 times and data can be inserted into table 4 times and cleaning could be very tough. Therefore there is a new arguments staging table and clear staging table
+•	Use of staging table will allow the insert done in staging table first and when the export is successful it inserts in the target mySQL table thus not making it inconsistent.
+•	Staging table concept is useful for tables where the schema doesn’t contain a primary key
+•	Staging table concept doesn’t work with update key and update mode
+
+Plain simple Sqoop Export with dumping the whole data into the new table created In mySQL
+sqoop export --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+       --username retail_dba \
+       --password cloudera \
+       --table order_items_export \
+       --export-dir /user/cloudera/Govind/Certification/Sqoop/departments/order_items \
+       --batch \
+       --outdir java_files
+
+SQOOP export with update key and update mode
+sqoop export \
+--connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+ --username retail_dba \
+ --password cloudera \
+ --table departments \
+ --export-dir /user/cloudera/Govind/Certification/Sqoop/departments/departments/part_depts_export \
+  --batch \
+  --outdir java_files \
+  -m 1 \
+  --update-key department_id \
+  --update-mode allowinsert
+
+SQOOP Export Delimiters
+Default Hive character for fields terminated is \001 ( assci value for ^A)
+
+Input parsing arguments
+--input-enclosed-by <char>	Sets a required field encloser
+--input-escaped-by <char>	Sets the input escape character
+--input-fields-terminated-by <char>	Sets the input field separator
+--input-lines-terminated-by <char>	Sets the input end-of-line character
+--input-optionally-enclosed-by <char>	Sets a field enclosing character
+
+Output line formatting arguments
+--enclosed-by <char>	Sets a required field enclosing character
+--escaped-by <char>	Sets the escape character
+--fields-terminated-by <char>	Sets the field separator character
+--lines-terminated-by <char>	Sets the end-of-line character
+--mysql-delimiters	Uses MySQL’s default delimiter set: fields: , lines: \n escaped-by: \optionally-enclosed-by: '
+--optionally-enclosed-by <char>	Sets a field enclosing character
+
+sqoop export  --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db"  --username=retail_dba  --password=cloudera  --table dept_test  --target-dir /user/cloudera/Govind/Certification/Sqoop/dept_test --enclosed-by \* --fields-terminated-by \| --lines-terminated-by \: --null-string nvl  --null-non-string -1 --outdir java_files -m 1
+
+
+sqoop export \
+--connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+--username retail_dba \
+--password cloudera \
+--table dept_test \
+--export-dir /user/hive/warehouse/sqoop_import.db/dept_test \
+ --input-fields-terminated-by ‘\001’ \
+ --input-lines-terminated-by ‘\n’ \
+ --num-mappers 2 \
+ --batch \
+ --input-null-string nvl \
+ --input-null-non-string -1 
