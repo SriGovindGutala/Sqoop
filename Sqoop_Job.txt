@@ -1,0 +1,23 @@
+You can create a job and run it whenever we want
+sqoop job --create sqoop_job \
+  -- import \
+  --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+  --username=retail_dba \
+  --password=cloudera \
+  --table departments \
+  --target-dir /user/hive/warehouse/retail_ods.db/departments \
+  --append \
+  --fields-terminated-by '|' \
+  --lines-terminated-by '\n' \
+  --check-column "department_id" \
+  --incremental append \
+  --last-value 7 \
+  --outdir java_files
+
+# Listing the Sqoop jobs available
+sqoop job --list
+# Explain what the job is
+sqoop job --show sqoop_job
+# You can change in the scoop env.sh file
+# Executing the job
+sqoop job --exec sqoop_job
