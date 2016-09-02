@@ -1,5 +1,9 @@
 Link for the sqoop documentation 
 https://sqoop.apache.org/docs/1.4.2/SqoopUserGuide.html
+
+You can get help of all the sqoop commands 
+sqoop import --help
+
 Sqoop code follows the below principles
 command subcommand series_of_arguments where command is sqoop, subcommand can be import or export and arguments are
 --connect
