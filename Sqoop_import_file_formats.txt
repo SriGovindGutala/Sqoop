@@ -1,0 +1,70 @@
+SQOOP File Formats
+
+--as-avrodatafile	Imports data to Avro Data Files
+--as-sequencefile	Imports data to SequenceFiles
+--as-textfile	Imports data as plain text (default)
+--as-parquetfile	Imports data to Parquet Files
+
+Avro – When you store the data in JSON format (Java Script Object Notation). Avro and JSON are similar
+Sequence – When you want to store the data in binary format
+Text – default, which stores in plain text with , as delimiter
+Parquet ( from sqoop 1.4.6) – Datawarehouse specific file. Columnar storage of the data. Popular in MVP platforms
+
+--Default
+sqoop import \
+  --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+  --username=retail_dba \
+  --password=cloudera \
+  --table departments \
+  --as-textfile \
+  --target-dir=/user/cloudera/departments
+
+sqoop import \
+  --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+  --username=retail_dba \
+  --password=cloudera \
+  --table departments \
+  --as-sequencefile  -m 1\
+  --target-dir=/user/cloudera/Govind/Sqoop/fileformat/dept_seq/
+
+sqoop import \
+  --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+  --username=retail_dba \
+  --password=cloudera \
+  --table departments \
+  --as-avrodatafile -m 1\
+  --target-dir=/user/cloudera/Govind/Sqoop/fileformat/dept_avro
+
+A file with extension avsc will be created under the directory from which sqoop import is executed home/cloudera/departments.avsc
+Cat departments.avsc
+
+{
+  "type" : "record",
+  "name" : "departments",
+  "doc" : "Sqoop import of departments",
+  "fields" : [ {
+    "name" : "department_id",
+    "type" : [ "null", "int" ],
+    "default" : null,
+    "columnName" : "department_id",
+    "sqlType" : "4"
+  }, {
+    "name" : "department_name",
+    "type" : [ "null", "string" ],
+    "default" : null,
+    "columnName" : "department_name",
+    "sqlType" : "12"
+  } ],
+  "tableName" : "departments"
+}
+
+Copy avsc file to HDFS location
+Create hive table with LOCATION to /user/cloudera/departments and TBLPROPERTIES pointing to avsc file
+hadoop fs -put home/cloudera/departments.avsc /user/cloudera/Govind/Sqoop/fileformat/dept_avro
+
+CREATE EXTERNAL TABLE depts
+ROW FORMAT SERDE 'org.apache.hadoop.hive.serde2.avro.AvroSerDe'
+STORED AS INPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerInputFormat'
+OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.avro.AvroContainerOutputFormat'
+LOCATION 'hdfs:/// user/cloudera/Govind/Sqoop/fileformat/dept_avro'
+TBLPROPERTIES ('avro.schema.url'='hdfs://quickstart.cloudera/user/cloudera/Govind/Sqoop/fileformat/dept_avro/departments.avsc');
