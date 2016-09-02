@@ -1,0 +1,90 @@
+SQOOP Import Incremental
+
+--check-column (col)	Specifies the column to be examined when determining which rows to import.
+--incremental (mode)	Specifies how Sqoop determines which rows are new. Legal values for modeinclude append and lastmodified.
+--last-value (value)	 Value for the latest date used which needs to be passed
+
+•	Append used when the tables in source are used for inserts with a unique ID which in case we can capture the delta and append it to hdfs
+•	Lastmodified  is used when the source table is used for updates where you need to capture the delta since a particular time
+•	You basically carry a log file where it contains the latest value of the previous sqoop import. You need to carry those and replace in the import incremental script
+
+-- Getting delta (--where)
+sqoop import \
+  --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+  --username=retail_dba \
+  --password=cloudera \
+  --table departments \
+  --target-dir /user/hive/warehouse/retail_ods.db/departments \
+  --append \
+  --split-by department_id \
+  --where "department_id > 7" \
+  --outdir java_files
+
+-- Incremental load
+sqoop import \
+  --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+  --username=retail_dba \
+  --password=cloudera \
+  --table departments \
+  --target-dir /user/hive/warehouse/retail_ods.db/departments \
+  --append \
+  --check-column "department_id" \
+  --incremental append \
+  --last-value 7 \
+  --outdir java_files
+
+
+SQOOP Import Delimiters
+Default sqoop field delimiter is ,
+Default line delimiter for sqoop and hive is same i.e. next line /n
+
+By doing 
+Hdfs dfs -cat /user/hive/warehouse/sqoop_import.db/dept_test/part*
+You can see garbage values as delimiters
+By doing 
+Hdfs dfs -get user/hive/warehouse/sqoop_import.db/dept_test
+View part-m-00000
+You see the correct delimiters
+
+--enclosed-by <char>	Sets a required field enclosing character
+--escaped-by <char>	Sets the escape character
+--fields-terminated-by <char>	Sets the field separator character
+--lines-terminated-by <char>	Sets the end-of-line character
+--mysql-delimiters	Uses MySQL’s default delimiter set: fields: , lines: \n escaped-by: \optionally-enclosed-by: '
+--optionally-enclosed-by <char>	Sets a field enclosing character
+
+
+Enclosed by – if the fields are to enclosed by specific character
+Escape by – If you need to escape certain characters while importing
+
+Importing into HDFS from mySQL
+sqoop import \
+ --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+ --username=retail_dba \
+ --password=cloudera \
+ --table departments \
+ --target-dir /user/cloudera/Govind/Certification/Sqoop/departments/departments/dept_enclosedby \
+ --enclosed-by \*
+ --fields-terminated-by \|
+ --lines- terminated -by :
+
+*2*|*Fitness*:*3*|*Footwear*:*4*|*Apparel*:*5*|*Golf*:*6*|*Outdoors*:*7*|*fanshop*:*9000*|*testing export*:
+
+sqoop import  --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db"  --username=retail_dba  --password=cloudera  --table dept_test  --target-dir /user/cloudera/Govind/Certification/Sqoop/dept_test --enclosed-by \* --fields-terminated-by \| --lines-terminated-by \: --null-string nvl  --null-non-string -1 --outdir java_files -m 1
+
+*2*|*Fitness*:*3*|*Footwear*:*4*|*Apparel*:*5*|*Golf*:*6*|*Outdoors*:*7*|*fanshop*:*9000*|*testing export*:*-1*|*nvl*:
+
+Importing into hive from mySQL
+sqoop import \
+  --connect "jdbc:mysql://quickstart.cloudera:3306/retail_db" \
+  --username=retail_dba \
+  --password=cloudera \
+  --table dept_test \
+  --hive-home /user/hive/warehouse \
+  --hive-import \
+  --hive-table sqoop_import.dept_test \
+  --hive-overwrite \
+  --null-string nvl \
+  --null-non-string -1 \
+  --outdir java_files \
+  -m 1
