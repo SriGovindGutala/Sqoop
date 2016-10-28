@@ -1,0 +1,16 @@
+parquet-tools
+parquet-tools schema part-m-00000.parquet
+
+avro-tools
+- here in avro tools observe getmeta and getschema tools
+  # getmeta will be in plain text but it wont be in readable format
+  # getschema will be structured 
+
+-to get meta or schema of the avro file
+avro-tools getmeta part-m-0000.avro
+avro-tools getschema part-m-0000.avro > departments.avsc
+-to convert from avro file to json file
+avro-tools tojson part-m-0000.avro
+avro-tools tojson part-m-0000.avro > departments.json
+-to convert a json file to avro file
+avro-tools fromjson departments.json --schema-file departments.avsc 
